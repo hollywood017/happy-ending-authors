@@ -35,8 +35,14 @@
     <li><a href="#journal">Journal</a></li>
     <li><a href="#events">Events</a></li>
   </ul>
-  <a href="#join" class="nav-cta">Join the Club</a>
+  <div class="nav-right">
+    <button class="dark-toggle" id="darkToggle" aria-label="Toggle dark mode" title="Toggle evening mode">🌙</button>
+    <a href="#join" class="nav-cta">Join the Club</a>
+  </div>
 </nav>
+
+<!-- GRAIN TEXTURE OVERLAY -->
+<div class="grain-overlay" aria-hidden="true"></div>
 
 <!-- HERO -->
 <section class="hero">
@@ -293,7 +299,7 @@
     </div>
     <a href="#" class="link-arrow">All Authors →</a>
   </div>
-  <div class="authors-grid">
+  <div class="authors-grid authors-scroll">
     <div class="author-card reveal-up" style="transition-delay:0.05s">
       <div class="author-avatar">
         <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&q=80&fit=crop&crop=face" alt="Elena Marchetti" style="width:72px;height:72px;object-fit:cover;border-radius:50%;">

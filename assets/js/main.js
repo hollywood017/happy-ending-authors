@@ -80,6 +80,28 @@ document.querySelectorAll('.marquee-track, .announcement-track').forEach(track =
   if (track) track.innerHTML += track.innerHTML;
 });
 
+// ── Dark / Evening mode toggle ──
+const darkToggle = document.getElementById('darkToggle');
+const DARK_KEY = 'hea-dark-mode';
+
+function applyDark(on) {
+  document.body.classList.toggle('dark-mode', on);
+  if (darkToggle) darkToggle.textContent = on ? '☀️' : '🌙';
+  try { localStorage.setItem(DARK_KEY, on ? '1' : '0'); } catch(e) {}
+}
+
+// Restore preference
+try {
+  const saved = localStorage.getItem(DARK_KEY);
+  if (saved === '1') applyDark(true);
+} catch(e) {}
+
+if (darkToggle) {
+  darkToggle.addEventListener('click', () => {
+    applyDark(!document.body.classList.contains('dark-mode'));
+  });
+}
+
 // ── Mobile hamburger nav ──
 function injectMobileNav() {
   if (!nav || document.querySelector('.nav-hamburger')) return;
