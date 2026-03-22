@@ -22,14 +22,27 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 // ── Scroll reveal animations ──
+// Only elements below the fold start hidden
+const viewportH = window.innerHeight;
+
+document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right').forEach(el => {
+  const rect = el.getBoundingClientRect();
+  if (rect.top > viewportH * 0.95) {
+    // Below fold — add below-fold class so CSS hides it
+    el.classList.add('below-fold');
+  } else {
+    // Already in view on load — mark visible immediately
+    el.classList.add('visible');
+  }
+});
+
 const revealObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       entry.target.classList.add('visible');
-      // Don't unobserve — keep visible once triggered
     }
   });
-}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
 document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right').forEach(el => {
   revealObserver.observe(el);

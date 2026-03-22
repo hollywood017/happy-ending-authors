@@ -210,24 +210,47 @@ nav.scrolled {
 
 /* ══════════════════════════════════════════
    SCROLL REVEAL ANIMATIONS
+   Hero elements are NEVER hidden on load —
+   only below-fold elements animate in.
    ══════════════════════════════════════════ */
 .reveal-up,
 .reveal-left,
 .reveal-right {
-  opacity: 0;
   transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
               transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.reveal-up    { transform: translateY(48px); }
-.reveal-left  { transform: translateX(-48px); }
-.reveal-right { transform: translateX(48px); }
+/* Below-fold elements start hidden until JS fires */
+.reveal-up.below-fold    { opacity: 0; transform: translateY(48px); }
+.reveal-left.below-fold  { opacity: 0; transform: translateX(-48px); }
+.reveal-right.below-fold { opacity: 0; transform: translateX(48px); }
 
 .reveal-up.visible,
 .reveal-left.visible,
 .reveal-right.visible {
   opacity: 1;
   transform: translate(0, 0);
+}
+
+/* ══════════════════════════════════════════
+   HERO LOAD ANIMATIONS (always fire, no JS needed)
+   ══════════════════════════════════════════ */
+@keyframes heroSlideLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes heroSlideRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.hero-animate-left {
+  animation: heroSlideLeft 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+.hero-animate-right {
+  animation: heroSlideRight 1s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
 }
 
 /* ══════════════════════════════════════════
@@ -275,13 +298,12 @@ nav.scrolled {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
   padding: 80px 80px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
   align-items: center;
+  min-height: calc(100vh - 80px);
 }
 
 .hero-left { }
