@@ -3,77 +3,79 @@
    Scroll Animations + Parallax + Mobile Nav
    ============================================ */
 
-// ── Announcement bar top offset tracking ──
+// ── Announcement bar + nav offset ──
 const announcementBar = document.querySelector('.announcement-bar');
 const nav = document.querySelector('nav');
 
 function updateNavOffset() {
-  const barH = announcementBar ? announcementBar.offsetHeight : 0;
-  if (nav) nav.style.top = window.scrollY > barH ? '0px' : `${barH - window.scrollY}px`;
+  if (!nav || !announcementBar) return;
+  const barH = announcementBar.offsetHeight;
+  const scrolled = window.scrollY > barH;
+  nav.style.top = scrolled ? '0px' : (barH - Math.min(window.scrollY, barH)) + 'px';
+  nav.classList.toggle('scrolled', scrolled);
 }
 
 window.addEventListener('scroll', updateNavOffset, { passive: true });
 updateNavOffset();
 
-// ── Nav scrolled class (shadow) ──
-window.addEventListener('scroll', () => {
-  const barH = announcementBar ? announcementBar.offsetHeight : 0;
-  if (nav) nav.classList.toggle('scrolled', window.scrollY > barH + 10);
-}, { passive: true });
+// ── Scroll reveal ──
+// Step 1: mark anything already in view as visible immediately
+// Step 2: mark everything else as below-fold (hidden)
+// Step 3: IntersectionObserver reveals below-fold as they scroll into view
 
-// ── Scroll reveal animations ──
-// Only elements below the fold start hidden
-const viewportH = window.innerHeight;
+function initReveal() {
+  const els = document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right');
+  const vh = window.innerHeight;
 
-document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right').forEach(el => {
-  const rect = el.getBoundingClientRect();
-  if (rect.top > viewportH * 0.95) {
-    // Below fold — add below-fold class so CSS hides it
-    el.classList.add('below-fold');
-  } else {
-    // Already in view on load — mark visible immediately
-    el.classList.add('visible');
-  }
-});
-
-const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
+  els.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < vh * 0.98) {
+      // Already in viewport on load — show immediately, no animation
+      el.classList.add('visible');
+    } else {
+      // Below fold — hide it, reveal on scroll
+      el.classList.add('below-fold');
     }
   });
-}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
-document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right').forEach(el => {
-  revealObserver.observe(el);
-});
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
 
-// ── Hero image Ken Burns effect on load ──
-const heroBgImg = document.querySelector('.hero-bg-img');
-if (heroBgImg) {
-  heroBgImg.addEventListener('load', () => {
-    heroBgImg.classList.add('loaded');
-  });
-  if (heroBgImg.complete) heroBgImg.classList.add('loaded');
+  els.forEach(el => observer.observe(el));
 }
 
-// ── Hero parallax (desktop only) ──
-let heroParallaxTicking = false;
+// Run after a tiny delay so layout is complete
+setTimeout(initReveal, 50);
+
+// ── Hero Ken Burns (slow zoom out on load) ──
+const heroBgImg = document.querySelector('.hero-bg-img');
+if (heroBgImg) {
+  const markLoaded = () => heroBgImg.classList.add('loaded');
+  if (heroBgImg.complete) markLoaded();
+  else heroBgImg.addEventListener('load', markLoaded);
+}
+
+// ── Hero parallax on scroll (desktop only) ──
+let ticking = false;
 window.addEventListener('scroll', () => {
-  if (window.innerWidth <= 1024) return;
-  if (!heroParallaxTicking) {
-    requestAnimationFrame(() => {
-      const scrollY = window.scrollY;
-      if (heroBgImg && scrollY < window.innerHeight * 1.5) {
-        heroBgImg.style.transform = `scale(1) translateY(${scrollY * 0.25}px)`;
-      }
-      heroParallaxTicking = false;
-    });
-    heroParallaxTicking = true;
-  }
+  if (window.innerWidth <= 1024 || ticking) return;
+  ticking = true;
+  requestAnimationFrame(() => {
+    const sy = window.scrollY;
+    if (heroBgImg && sy < window.innerHeight * 1.5) {
+      heroBgImg.style.transform = `scale(1) translateY(${sy * 0.22}px)`;
+    }
+    ticking = false;
+  });
 }, { passive: true });
 
-// ── Marquee: duplicate for seamless loop ──
+// ── Marquee duplicate for seamless loop ──
 document.querySelectorAll('.marquee-track, .announcement-track').forEach(track => {
   if (track) track.innerHTML += track.innerHTML;
 });
@@ -101,56 +103,19 @@ function injectMobileNav() {
   `;
   document.body.appendChild(drawer);
 
-  function closeDrawer() {
+  const close = () => {
     drawer.classList.remove('open');
     document.body.style.overflow = '';
-  }
+  };
 
   hamburger.addEventListener('click', () => {
     drawer.classList.add('open');
     document.body.style.overflow = 'hidden';
   });
 
-  drawer.querySelector('.nav-drawer-close').addEventListener('click', closeDrawer);
-  drawer.querySelectorAll('a').forEach(link => link.addEventListener('click', closeDrawer));
-  drawer.addEventListener('click', e => { if (e.target === drawer) closeDrawer(); });
+  drawer.querySelector('.nav-drawer-close').addEventListener('click', close);
+  drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', close));
+  drawer.addEventListener('click', e => { if (e.target === drawer) close(); });
 }
 
 injectMobileNav();
-
-// ── Blog image hover zoom (already handled via CSS) ──
-// ── Smooth stat counter animation ──
-function animateCounter(el) {
-  const text = el.textContent.trim();
-  const numMatch = text.match(/[\d,]+/);
-  if (!numMatch) return;
-  const target = parseInt(numMatch[0].replace(/,/g, ''), 10);
-  const suffix = text.replace(numMatch[0], '');
-  let start = 0;
-  const duration = 1400;
-  const startTime = performance.now();
-
-  function step(currentTime) {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3); // ease out cubic
-    const current = Math.floor(eased * target);
-    el.textContent = current.toLocaleString() + suffix;
-    if (progress < 1) requestAnimationFrame(step);
-  }
-
-  requestAnimationFrame(step);
-}
-
-// Trigger counters when stats section comes into view
-const statsObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.querySelectorAll('.stat-num').forEach(animateCounter);
-      statsObserver.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.5 });
-
-const heroStats = document.querySelector('.hero-stats');
-if (heroStats) statsObserver.observe(heroStats);
